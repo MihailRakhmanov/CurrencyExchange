@@ -37,7 +37,7 @@ public class CurrenciesServlet extends HttpServlet {
 
         Currency currency = new Currency(code, name, sign);
 
-        if (DataValidator.isNotValidCurrenciesArgs(currency)) {
+        if (DataValidator.isNotValidCurrencyArgs(currency)) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Не правильно введены данные. Пример: code = 'USD', name = 'US Dollar', sign = '$'");
         }
 
