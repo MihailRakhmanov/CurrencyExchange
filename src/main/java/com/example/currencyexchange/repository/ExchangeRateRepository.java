@@ -1,5 +1,6 @@
 package com.example.currencyexchange.repository;
 
+import com.example.currencyexchange.model.Currency;
 import com.example.currencyexchange.model.ExchangeRate;
 
 import javax.sql.DataSource;
@@ -35,7 +36,26 @@ public class ExchangeRateRepository implements CrudRepository<ExchangeRate>{
 
     @Override
     public Optional<ExchangeRate> findById(Integer id) {
-        return Optional.empty();
+        final String query = "SELECT id, baseCurrencyId, targetCurrencyId, rate FROM ExchangeRate WHERE id=?";
+
+        ExchangeRate exchangeRate = null;
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+
+            statement.setInt(1, id);
+
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                exchangeRate = mappedExchangeRate(resultSet);
+            }
+
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return Optional.ofNullable(exchangeRate);
     }
 
     @Override
@@ -81,12 +101,25 @@ public class ExchangeRateRepository implements CrudRepository<ExchangeRate>{
             throw new RuntimeException(ex);
         }
 
-        updateReverseExchangeRate(entity);
+        //updateReverseExchangeRate(entity);
     }
 
     @Override
     public void update(ExchangeRate entity) {
+        final String query = "UPDATE ExchangeRate SET rate=? WHERE id=?";
 
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+
+            statement.setBigDecimal(1, entity.getRate());
+            statement.setInt(2, entity.getId());
+
+            statement.execute();
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -97,7 +130,7 @@ public class ExchangeRateRepository implements CrudRepository<ExchangeRate>{
     public Optional<ExchangeRate> findByCurrenciesId(Integer baseCurrencyId, Integer targetCurrencyId) {
         ExchangeRate exchangeRate = null;
 
-        final String query = "SELECT * FROM ExchangeRate WHERE baseCurrencyId=? AND targetCurrencyId=?";
+        final String query = "SELECT id, baseCurrencyId, targetCurrencyId, rate FROM ExchangeRate WHERE baseCurrencyId=? AND targetCurrencyId=?";
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
@@ -117,7 +150,32 @@ public class ExchangeRateRepository implements CrudRepository<ExchangeRate>{
         return Optional.ofNullable(exchangeRate);
     }
 
-    public void updateReverseExchangeRate(ExchangeRate exchangeRate) {
+    public Optional<ExchangeRate> findByCurrenciesCodes(String baseCurrencyCode, String targetCurrencyCode){
+        final String query = "SELECT id, baseCurrencyId, targetCurrencyId, rate FROM ExchangeRate WHERE baseCurrencyId=? AND targetCurrencyId=?";
+
+        ExchangeRate exchangeRate = null;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setInt(1,
+                    currencyRepository.findByCode(baseCurrencyCode).get().getId());
+            statement.setInt(2,
+                    currencyRepository.findByCode(targetCurrencyCode).get().getId());
+
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                exchangeRate = mappedExchangeRate(resultSet);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return Optional.ofNullable(exchangeRate);
+    }
+
+    /*public void updateReverseExchangeRate(ExchangeRate exchangeRate) {
         Optional<ExchangeRate> reverseExchangeRate = findByCurrenciesId(
                 exchangeRate.getTargetCurrency().getId(), exchangeRate.getBaseCurrency().getId());
 
@@ -125,5 +183,5 @@ public class ExchangeRateRepository implements CrudRepository<ExchangeRate>{
             reverseExchangeRate.get().setRate(new BigDecimal(1).divide(exchangeRate.getRate()));
             update(reverseExchangeRate.get());
         }
-    }
+    }*/
 }

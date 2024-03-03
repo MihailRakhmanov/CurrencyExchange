@@ -33,7 +33,27 @@ public class CurrencyRepository implements CrudRepository<Currency>{
 
     @Override
     public Optional<Currency> findById(Integer id) {
-        return Optional.empty();
+        final String query = "SELECT id, code, fullName, sign FROM Currencies WHERE id=?";
+        Currency currency = null;
+
+        try (Connection connection = dataSource.getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+
+
+            statement.setInt(1, id);
+
+            ResultSet resultSet = statement.executeQuery();
+
+            if (resultSet.next()) {
+                currency = mappedCurrency(resultSet);
+            }
+
+
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return Optional.ofNullable(currency);
+
     }
 
     @Override

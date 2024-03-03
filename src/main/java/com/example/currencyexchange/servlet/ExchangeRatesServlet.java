@@ -64,9 +64,10 @@ public class ExchangeRatesServlet extends HttpServlet {
 
         exchangeRateRepository.save(exchangeRate);
 
-        Optional<ExchangeRate> EToResponse = currencyRepository.findByCode(code);
-        if (currencyToResponse.isPresent()){
-            resp.getWriter().write(new ObjectMapper().writeValueAsString(currencyToResponse.get()));
+        Optional<ExchangeRate> exchangeRateToResponse = exchangeRateRepository.findByCurrenciesId(baseCurrency.get().getId(),
+                targetCurrency.get().getId());
+        if (exchangeRateToResponse.isPresent()){
+            resp.getWriter().write(new ObjectMapper().writeValueAsString(exchangeRateToResponse.get()));
         }
     }
 }
