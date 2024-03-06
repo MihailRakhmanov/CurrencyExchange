@@ -2,11 +2,11 @@ package com.example.currencyexchange.listener;
 
 import com.example.currencyexchange.repository.CurrencyRepository;
 import com.example.currencyexchange.repository.ExchangeRateRepository;
+import com.example.currencyexchange.util.DBConnection;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
-import org.sqlite.SQLiteDataSource;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -20,9 +20,8 @@ public class ContextListener implements ServletContextListener {
         ServletContext context = sce.getServletContext();
 
         try {
-            dataSource = makeDataSource();
+            dataSource = DBConnection.getDataSource();
         } catch (SQLException e) {
-            //throw new RuntimeException(e);
             e.printStackTrace();
         }
 
@@ -39,15 +38,16 @@ public class ContextListener implements ServletContextListener {
         ServletContextListener.super.contextDestroyed(sce);
     }
 
-    private DataSource makeDataSource() throws SQLException {
+// Вариант подключения к БД без Hikari
+/*    private DataSource makeDataSource() throws SQLException {
         SQLiteDataSource sqliteDataSource = new SQLiteDataSource();
-        sqliteDataSource.setUrl("jdbc:sqlite:identifier.sqlite");
+        sqliteDataSource.setUrl("jdbc:sqlite::resource:currency");
         DataSource dataSource;
 
         dataSource = sqliteDataSource;
 
 
         return dataSource;
-    }
+    }*/
 
 }

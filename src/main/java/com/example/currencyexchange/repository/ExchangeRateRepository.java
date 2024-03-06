@@ -1,10 +1,8 @@
 package com.example.currencyexchange.repository;
 
-import com.example.currencyexchange.model.Currency;
 import com.example.currencyexchange.model.ExchangeRate;
 
 import javax.sql.DataSource;
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -67,9 +65,6 @@ public class ExchangeRateRepository implements CrudRepository<ExchangeRate>{
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)){
 
-            //statement.execute();
-            //ResultSet resultSet = statement.getResultSet();
-
             ResultSet resultSet = statement.executeQuery();
 
             while (resultSet.next()) {
@@ -101,7 +96,6 @@ public class ExchangeRateRepository implements CrudRepository<ExchangeRate>{
             throw new RuntimeException(ex);
         }
 
-        //updateReverseExchangeRate(entity);
     }
 
     @Override
@@ -175,13 +169,4 @@ public class ExchangeRateRepository implements CrudRepository<ExchangeRate>{
         return Optional.ofNullable(exchangeRate);
     }
 
-    /*public void updateReverseExchangeRate(ExchangeRate exchangeRate) {
-        Optional<ExchangeRate> reverseExchangeRate = findByCurrenciesId(
-                exchangeRate.getTargetCurrency().getId(), exchangeRate.getBaseCurrency().getId());
-
-        if (reverseExchangeRate.isPresent()) {
-            reverseExchangeRate.get().setRate(new BigDecimal(1).divide(exchangeRate.getRate()));
-            update(reverseExchangeRate.get());
-        }
-    }*/
 }

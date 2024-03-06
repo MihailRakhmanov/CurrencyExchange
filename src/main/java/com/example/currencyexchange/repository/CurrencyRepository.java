@@ -65,9 +65,6 @@ public class CurrencyRepository implements CrudRepository<Currency>{
         try (Connection connection = dataSource.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)){
 
-            //statement.execute();
-            //ResultSet resultSet = statement.getResultSet();
-
             ResultSet resultSet = statement.executeQuery();
 
             while (resultSet.next()) {
