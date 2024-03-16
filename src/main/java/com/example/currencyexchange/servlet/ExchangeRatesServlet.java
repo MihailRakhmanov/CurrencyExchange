@@ -7,7 +7,6 @@ import com.example.currencyexchange.repository.ExchangeRateRepository;
 import com.example.currencyexchange.util.DataValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletConfig;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,18 +22,18 @@ public class ExchangeRatesServlet extends HttpServlet {
     private CurrencyRepository currencyRepository;
 
     @Override
-    public void init(ServletConfig config) throws ServletException {
+    public void init(ServletConfig config) {
         exchangeRateRepository = (ExchangeRateRepository) config.getServletContext().getAttribute("exchangeRateRepository");
         currencyRepository = (CurrencyRepository) config.getServletContext().getAttribute("currencyRepository");
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         new ObjectMapper().writeValue(resp.getWriter(), exchangeRateRepository.findAll());
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String baseCurrencyCode = req.getParameter("baseCurrencyCode");
         String targetCurrencyCode = req.getParameter("targetCurrencyCode");
         String rate = req.getParameter("rate");
@@ -42,23 +41,26 @@ public class ExchangeRatesServlet extends HttpServlet {
         Optional<Currency> baseCurrency = currencyRepository.findByCode(baseCurrencyCode);
         Optional<Currency> targetCurrency = currencyRepository.findByCode(targetCurrencyCode);
 
-        if (!baseCurrency.isPresent() || !targetCurrency.isPresent()) {
+        if (baseCurrency.isEmpty() || targetCurrency.isEmpty()) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Одна (или обе) валюта из валютной пары не существует в БД");
             return;
         }
 
         if(!DataValidator.isStringDouble(rate)){
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Не правильно введен курс обмена. Пример: rate = '1.05'");
+            return;
         }
 
         ExchangeRate exchangeRate = new ExchangeRate(baseCurrency.get(), targetCurrency.get(), new BigDecimal(rate));
 
         if (DataValidator.isNotValidExchangeRateArgs(exchangeRate)) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Не правильно введены данные. Пример: baseCurrency = 'USD', targetCurrency = 'EUR', rate = '1.05'");
+            return;
         }
 
         if (exchangeRateRepository.findByCurrenciesId(baseCurrency.get().getId(), targetCurrency.get().getId()).isPresent()) {
             resp.sendError(HttpServletResponse.SC_CONFLICT, "Такая валютная пара уже существует");
+            return;
         }
 
 

@@ -8,7 +8,6 @@ import com.example.currencyexchange.service.ExchangeService;
 import com.example.currencyexchange.util.DataValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletConfig;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,14 +24,14 @@ public class ExchangeServlet extends HttpServlet {
     private ExchangeService exchangeService;
 
     @Override
-    public void init(ServletConfig config) throws ServletException {
+    public void init(ServletConfig config) {
         currencyRepository = (CurrencyRepository) config.getServletContext().getAttribute("currencyRepository");
-        exchangeRatesRepository = (ExchangeRateRepository) config.getServletContext().getAttribute("exchangeRatesRepository");
+        exchangeRatesRepository = (ExchangeRateRepository) config.getServletContext().getAttribute("exchangeRateRepository");
         exchangeService = new ExchangeService(exchangeRatesRepository);
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String from = req.getParameter("from");
         String to = req.getParameter("to");
         String amount = req.getParameter("amount");
@@ -42,16 +41,19 @@ public class ExchangeServlet extends HttpServlet {
 
         if (!(fromCurrency.isPresent() && toCurrency.isPresent())){
             resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Указана не существующая валюта. Пример: /exchange?from=USD&to=RUB&amount=10");
+            return;
         }
 
         if (!DataValidator.isStringDouble(amount)){
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Неправильно введен запрос. Пример: /exchange?from=USD&to=RUB&amount=10");
+            return;
         }
 
         BigDecimal rate = exchangeService.getRate(from, to);
 
         if (rate == null) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Не существует курс обмена");
+            return;
         }
 
         new ObjectMapper().writeValue(resp.getWriter(), new ExchangeDTO(

@@ -20,8 +20,8 @@ public class ExchangeRateServlet extends HttpServlet {
     private ExchangeRateRepository exchangeRateRepository;
 
     @Override
-    public void init(ServletConfig config) throws ServletException {
-        exchangeRateRepository = (ExchangeRateRepository) config.getServletContext().getAttribute("exchangeRatesRepository");
+    public void init(ServletConfig config) {
+        exchangeRateRepository = (ExchangeRateRepository) config.getServletContext().getAttribute("exchangeRateRepository");
     }
 
     @Override
@@ -33,36 +33,43 @@ public class ExchangeRateServlet extends HttpServlet {
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         if (req.getPathInfo() == null || req.getPathInfo().equals("/")){
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Коды валют пары отсутствуют в адресе. Пример: .../exchangeRate/USDRUB");
+            return;
         }
 
         String currenciesCodes = req.getPathInfo().replaceFirst("/", "").toUpperCase();
 
         if (currenciesCodes.length() != 6) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Указана не корректная пара валют. Пример: .../exchangeRate/USDRUB");
+            return;
         }
 
         Optional<ExchangeRate> exchangeRate = exchangeRateRepository.findByCurrenciesCodes(
                 currenciesCodes.substring(0, 3), currenciesCodes.substring(3, 6));
 
-        if (!exchangeRate.isPresent()) {
+        if (exchangeRate.isEmpty()) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Обменный курс для пары не найден");
+            return;
         }
 
         resp.getWriter().write(new ObjectMapper().writeValueAsString(exchangeRate.get()));
     }
 
-    protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException{
-        String rate = req.getParameter("rate");
+    protected void doPatch(HttpServletRequest req, HttpServletResponse resp) throws IOException{
+        //String rate = req.getParameter("rate"); - Не работает для patch
+        String parameter = req.getReader().readLine();
+        String rate = parameter.replace("rate=", "");
 
         if (rate == null || rate.isEmpty()) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Отсутствует обменный курс");
+            return;
         }
 
         if (!DataValidator.isStringDouble(rate)) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Введите значение. Пример: 1.05");
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Введите значение. Пример: 1.05 " + rate);
+            return;
         }
 
         String currenciesCodes = req.getPathInfo().replaceFirst("/", "").toUpperCase();

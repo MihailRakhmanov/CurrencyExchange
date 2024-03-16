@@ -4,7 +4,6 @@ import com.example.currencyexchange.model.Currency;
 import com.example.currencyexchange.repository.CurrencyRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletConfig;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,12 +17,12 @@ public class CurrencyServlet extends HttpServlet {
     private CurrencyRepository currencyRepository;
 
     @Override
-    public void init(ServletConfig config) throws ServletException {
+    public void init(ServletConfig config){
         currencyRepository = (CurrencyRepository) config.getServletContext().getAttribute("currencyRepository");
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         if (req.getPathInfo() == null || req.getPathInfo().equals("/")){
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Указана не корректная валюта. Пример: .../currency/RUB");
         }
@@ -32,8 +31,9 @@ public class CurrencyServlet extends HttpServlet {
 
         Optional<Currency> currency = currencyRepository.findByCode(currencyCode);
 
-        if (!currency.isPresent()) {
+        if (currency.isEmpty()) {
             resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Валюта не найдена. Пример: .../currency/RUB");
+            return;
         }
 
         resp.getWriter().write(new ObjectMapper().writeValueAsString(currency.get()));

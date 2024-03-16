@@ -9,6 +9,7 @@ import java.sql.SQLException;
 public class DBConnection {
 
     private static final String DB_URL = "jdbc:sqlite::resource:currency";
+    //private static final String DB_URL = "jdbc:sqlite:resources:currency";
     private static final String DRIVER = "org.sqlite.JDBC";
     private static HikariDataSource dataSource;
 
